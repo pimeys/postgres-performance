@@ -1,0 +1,67 @@
+version: "3"
+networks:
+  databases:
+volumes:
+  grafana-data:
+services:
+  postgres-13:
+    image: postgres:13
+    restart: always
+    command: postgres -c 'max_connections=1000'
+    environment:
+      POSTGRES_PASSWORD: "prisma"
+    ports:
+      - "5435:5432"
+    networks:
+      - databases
+
+  postgres-14:
+    image: postgres:14
+    restart: always
+    command: postgres -c 'max_connections=1000'
+    environment:
+      POSTGRES_PASSWORD: "prisma"
+    ports:
+      - "5437:5432"
+    networks:
+      - databases
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - databases
+    volumes:
+      - "./grafana/datasources:/etc/grafana/provisioning/datasources"
+      - "./grafana/dashboards:/etc/grafana/provisioning/dashboards"
+      - grafana-data:/var/lib/grafana
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    networks:
+      - databases
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - "./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+
+  exporter-13:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:prisma@postgres-13:5432/postgres?sslmode=disable"
+    networks:
+      - databases
+    ports:
+      - "9187:9187"
+
+  exporter-14:
+    image: quay.io/prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:prisma@postgres-14:5432/postgres?sslmode=disable"
+    ports:
+      - "9188:9187"
+    networks:
+      - databases
