@@ -10,6 +10,7 @@ async fn connect(port: u16) -> anyhow::Result<Client> {
     config.host("127.0.0.1");
     config.port(port);
     config.dbname("postgres");
+    config.ssl_mode(SslMode::Disable);
 
     let (client, connection) = config.connect(NoTls).await.unwrap();
 
