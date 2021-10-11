@@ -25,6 +25,8 @@ services:
       - "5437:5432"
     networks:
       - databases
+    volumes:
+      - "./postgres/postgresql.conf:/etc/postgresql/postgresql.conf"
 
   grafana:
     image: grafana/grafana:latest

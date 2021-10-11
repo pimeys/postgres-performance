@@ -120,6 +120,7 @@ dependencies = [
  "anyhow",
  "criterion",
  "once_cell",
+ "socket2",
  "tokio",
  "tokio-postgres",
 ]
