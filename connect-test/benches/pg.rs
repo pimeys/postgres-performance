@@ -12,7 +12,7 @@ async fn connect(port: u16) -> anyhow::Result<Client> {
     config.dbname("postgres");
     config.ssl_mode(SslMode::Disable);
 
-    let (client, connection) = config.connect(NoTls).await.unwrap();
+    let (client, connection) = config.connect(NoTls).await?;
 
     tokio::spawn(async move {
         if let Err(e) = connection.await {
@@ -29,10 +29,10 @@ fn full_connect_test(rt: &Runtime, port: u16) {
     })
 }
 
-fn _query_test(rt: &Runtime, client: &Client, query: &str) {
+fn simple_query_test(rt: &Runtime, client: &Client) {
     rt.block_on(async {
-        client.query(query, &[]).await.unwrap();
-    });
+        client.query("SELECT 1", &[]).await.unwrap();
+    })
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -47,6 +47,16 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("pg13 full connect", |b| {
         b.iter(|| full_connect_test(&rt, black_box(pg13)))
+    });
+
+    c.bench_function("pg14 select 1", |b| {
+        let client = rt.block_on(async { connect(pg14).await.unwrap() });
+        b.iter(|| simple_query_test(&rt, &client));
+    });
+
+    c.bench_function("pg13 select 1", |b| {
+        let client = rt.block_on(async { connect(pg13).await.unwrap() });
+        b.iter(|| simple_query_test(&rt, &client));
     });
 }
 
